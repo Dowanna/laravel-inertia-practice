@@ -123,25 +123,41 @@ Object.defineProperty(exports, "__esModule", ({
 }));
 exports.TestSwr = void 0;
 
+var inertia_react_1 = __webpack_require__(/*! @inertiajs/inertia-react */ "./node_modules/@inertiajs/inertia-react/dist/index.js");
+
 var react_1 = __importDefault(__webpack_require__(/*! react */ "./node_modules/react/index.js"));
 
-var swr_1 = __importDefault(__webpack_require__(/*! swr */ "./node_modules/swr/dist/index.esm.js"));
+var swr_1 = __importDefault(__webpack_require__(/*! swr */ "./node_modules/swr/dist/index.esm.js")); // memo: inertia requestを作成するには特殊ヘッダーをつける必要がある
+// versionはビルドごとに固有なのでusepageで取得して付与する必要がある
 
-var fetcher = function fetcher() {
-  return fetch('https://jsonplaceholder.typicode.com/todos/1').then(function (res) {
-    return res.json();
-  });
+
+var fetcher = function fetcher(version) {
+  return function () {
+    return fetch('http://localhost:8000/Users/Profile', {
+      headers: {
+        'X-Inertia': 'true',
+        'X-Inertia-Version': version
+      }
+    }).then(function (res) {
+      return res.json();
+    });
+  };
 };
 
-function TestSwr() {
-  var _ref = (0, swr_1["default"])('/api/user/123', fetcher),
-      data = _ref.data,
-      error = _ref.error;
+function TestSwr(_ref) {
+  var user = _ref.user;
 
-  if (error) return react_1["default"].createElement("div", null, "failed to load");
+  var _ref2 = (0, inertia_react_1.usePage)(),
+      version = _ref2.version;
+
+  var _ref3 = (0, swr_1["default"])('/api/user/123', fetcher(version !== null && version !== void 0 ? version : 'no-version')),
+      data = _ref3.data,
+      error = _ref3.error;
+
+  if (error) return react_1["default"].createElement("div", null, "failed to load: ", JSON.stringify(error));
   if (!data) return react_1["default"].createElement("div", null, "loading..."); // render data
 
-  return react_1["default"].createElement("div", null, JSON.stringify(data));
+  return react_1["default"].createElement("div", null, "userID: ".concat(data.props.user));
 }
 
 exports.TestSwr = TestSwr;
@@ -216,14 +232,19 @@ var react_1 = __importStar(__webpack_require__(/*! react */ "./node_modules/reac
 
 var TestChakra_1 = __webpack_require__(/*! ../../Components/TestChakra */ "./resources/js/Components/TestChakra.tsx");
 
-var TestSwr_1 = __webpack_require__(/*! ../../Components/TestSwr */ "./resources/js/Components/TestSwr.tsx");
+var TestSwr_1 = __webpack_require__(/*! ../../Components/TestSwr */ "./resources/js/Components/TestSwr.tsx"); // todo: inertiaから返ってくるデータの型つけたい
 
-var Profile = function Profile() {
-  var _ref = (0, react_1.useState)('hoge'),
-      _ref2 = _slicedToArray(_ref, 1),
-      someText = _ref2[0];
 
-  return react_1["default"].createElement("div", null, react_1["default"].createElement("p", null, "react dayo: ", someText), react_1["default"].createElement(TestSwr_1.TestSwr, null), react_1["default"].createElement(TestChakra_1.Example, null));
+var Profile = function Profile(_ref) {
+  var user = _ref.user;
+
+  var _ref2 = (0, react_1.useState)('hoge'),
+      _ref3 = _slicedToArray(_ref2, 1),
+      someText = _ref3[0];
+
+  return react_1["default"].createElement("div", null, react_1["default"].createElement("p", null, "react dayo: ", someText), react_1["default"].createElement(TestSwr_1.TestSwr, {
+    user: user
+  }), react_1["default"].createElement(TestChakra_1.Example, null));
 };
 
 exports["default"] = Profile;
